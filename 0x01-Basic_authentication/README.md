@@ -1,7 +1,4 @@
-# Simple API
-
-Simple HTTP API for playing with `User` model.
-
+# Backend - Basic Authentication
 
 ## Files
 
