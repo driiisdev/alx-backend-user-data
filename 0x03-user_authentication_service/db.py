@@ -12,6 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 VALID_FIELDS = ['id', 'email', 'hashed_password', 'session_id',
                 'reset_token']
 
+
 class DB:
     """DB class
     """
