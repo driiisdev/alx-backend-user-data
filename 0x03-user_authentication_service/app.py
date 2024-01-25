@@ -58,15 +58,18 @@ def logout() -> str:
     """
     DEstroys a login session for the user defined by session_id
     """
-    session_id = request.cookies.get('session_id')
+    session_id = request.cookies.get('session_id', None)
+
     if session_id is None:
-        abort(400)
-    try:
-        user = AUTH.get_user_from_session_id(session_id)
-        AUTH.destroy_session(user.id)
-    except Exception:
         abort(403)
-    return redirect('/'), 302
+
+    user = AUTH.get_user_from_session_id(session_id)
+
+    if user:
+        AUTH.destroy_session(user.id)
+        return redirect('/')
+    else:
+        abort(403)
 
 
 @app.route('/profile', methods=['GET'], strict_slashes=False)
