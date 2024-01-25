@@ -1,114 +1,121 @@
 #!/usr/bin/env python3
+
 """
-End-to-end integration test
+Module for testing all functionalities
 """
+
 import requests
 
+url = 'http://127.0.0.1:5000/'
 EMAIL = "guillaume@holberton.io"
 PASSWD = "b4l0u"
 NEW_PASSWD = "t4rt1fl3tt3"
-BASE_URL = "http://localhost:5000"
 
 
 def register_user(email: str, password: str) -> None:
-    """Integeration test for validating user registeration
     """
-    payload = {'email': email, 'password': password}
-    res = requests.post(f'{BASE_URL}/users', data=payload)
-    msg = {"email": email, "message": "user created"}
-
-    assert res.status_code == 200
-    assert res.json() == msg
+    Test for registering a new user
+    """
+    data = {
+            'email': email,
+            'password': password
+    }
+    response = requests.post(url + 'users', data=data)
+    assert response.status_code == 200
+    assert response.json() == {
+        'email': email,
+        'message': 'user created'
+    }
 
 
 def log_in_wrong_password(email: str, password: str) -> None:
-    """Integeration test for validating login with wrong password
     """
-    payload = {'email': email, 'password': password}
-    res = requests.post(f'{BASE_URL}/sessions', data=payload)
-
-    assert res.status_code == 401
-
-
-def log_in(email: str, password: str) -> str:
-    """Test for validating user login with correct credentials
+    Test for user log in with wrong password
     """
-    payload = {'email': email, 'password': password}
-    res = requests.post(f'{BASE_URL}/sessions', data=payload)
-    msg = {"email": email, "message": "logged in"}
+    data = {
+            'email': email,
+            'password': password
+    }
+    response = requests.post(url + 'sessions', data=data)
+    assert response.status_code == 401
 
-    assert res.status_code == 200
-    assert res.json() == msg
 
-    return res.cookies.get('session_id')
+def log_in(email: str, password: str) -> None:
+    """
+    Test for user log in
+    """
+    data = {
+            'email': email,
+            'password': password
+    }
+    response = requests.post(url + 'sessions', data=data)
+    assert response.json() == {'email': email, 'message': 'logged in'}
+    assert response.status_code == 200
+    return response.cookies.get_dict()['session_id']
 
 
 def profile_unlogged() -> None:
-    """Test user's profile unlogged
     """
-    cookies = {'session_id': ""}
-    res = requests.get(f'{BASE_URL}/profile', cookies=cookies)
-
-    assert res.status_code == 403
+    Checks for route `/profile` when no user is logged in
+    """
+    response = requests.get(url + 'profile')
+    assert response.status_code == 403
 
 
 def profile_logged(session_id: str) -> None:
-    """Validate user's profile logged in
     """
-    cookies = {'session_id': session_id}
-    res = requests.get(f'{BASE_URL}/profile', cookies=cookies)
-    msg = {"email": EMAIL}
-
-    assert res.status_code == 200
-    assert res.json() == msg
+    Checks for route `/profile` when no user is logged in
+    """
+    cookie = {'session_id': session_id}
+    response = requests.get(url + 'profile', cookies=cookie)
+    assert response.status_code == 200
+    assert response.json() == {'email': EMAIL}
 
 
 def log_out(session_id: str) -> None:
-    """Validate log out route handler
     """
-    cookies = {'session_id': session_id}
-    res = requests.delete(f'{BASE_URL}/sessions', cookies=cookies)
-    msg = {"message": "Bienvenue"}
-
-    assert res.status_code == 200
-    assert res.json() == msg
+    Test for user log out
+    """
+    cookie = {'session_id': session_id}
+    response = requests.delete(url + 'sessions', cookies=cookie)
+    assert response.status_code == 200
+    assert response.json() == {'message': 'Bienvenue'}
 
 
 def reset_password_token(email: str) -> str:
-    """Validate reset password token route handler
     """
-    payload = {'email': email}
-    res = requests.post(f'{BASE_URL}/reset_password', data=payload)
-
-    token = res.json().get('reset_token')
-    msg = {"email": email, "reset_token": token}
-
-    assert res.status_code == 200
-    assert res.json() == msg
-
-    return token
-
-
-def update_password(email: str,
-                    reset_token: str,
-                    new_password: str) -> None:
-    """Validate update password route handler
+    Returns the reset_password token
+    for the user specified by `email`
     """
+    response = requests.post(url + 'reset_password', data={'email': email})
+    json_res = response.json()
+    assert response.status_code == 200
+    assert response.json() == {
+        "email": email,
+        "reset_token": json_res['reset_token']
+    }
+    return json_res['reset_token']
 
-    payload = {
+
+def update_password(email: str, reset_token: str, password: str) -> None:
+    """
+    Test for updating user password
+    """
+    data = {
         'email': email,
         'reset_token': reset_token,
-        'new_password': new_password
+        'new_password': password
     }
-
-    res = requests.put(f'{BASE_URL}/reset_password', data=payload)
-    msg = {"email": email, "message": "Password updated"}
-
-    assert res.status_code == 200
-    assert res.json() == msg
+    response = requests.put(url + 'reset_password', data)
+    assert response.status_code == 200
+    assert response.json() == {
+        'email': email,
+        'message': 'Password updated'
+    }
 
 
 if __name__ == "__main__":
+
     register_user(EMAIL, PASSWD)
     log_in_wrong_password(EMAIL, NEW_PASSWD)
     profile_unlogged()
